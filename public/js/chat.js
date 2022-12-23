@@ -72,7 +72,7 @@ const addMessage = (data) => {
       src=${data.user.avatar}
     />
 
-    <strong>${data.user.name}</strong>
+    <strong>${data.user.name} &nbsp</strong>
     
     <span>${dayjs(data.message.created_at).format(
       "DD/MM/YYYY HH:mm"
@@ -102,11 +102,20 @@ const addUser = (user) => {
 };
 
 document.getElementById("users_list").addEventListener("click", (e) => {
+  const inputMessage = document.getElementById("user_message");
+  inputMessage.classList.remove("hidden");
+
+  document
+    .querySelectorAll("li.user_name_list")
+    .forEach((item) => item.classList.remove("user_in_focus"));
+
   document.getElementById("message_user").innerHTML = "";
 
   if (e.target && e.target.matches("li.user_name_list")) {
-    const idUser = e.target.getAttribute("idUser");
     // console.log("idUser", idUser);
+    const idUser = e.target.getAttribute("idUser");
+
+    e.target.classList.add("user_in_focus");
 
     const notification = document.querySelector(
       `#user_${idUser} .notification`
