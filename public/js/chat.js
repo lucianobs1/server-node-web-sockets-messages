@@ -41,8 +41,48 @@ function onLoad() {
 
   socket.on("message", (data) => {
     console.log("message", data);
+
+    if (data.message.roomId === idChatRoom) {
+      addMessage(data);
+    }
+  });
+
+  socket.on("notification", (data) => {
+    if (data.roomId !== idChatRoom) {
+      const user = document.getElementById(`user_${data.from._id}`);
+
+      user.insertAdjacentHTML(
+        "afterbegin",
+        `
+        <div class="notification"> </div>
+      `
+      );
+    }
   });
 }
+
+const addMessage = (data) => {
+  const divMessageUser = document.getElementById("message_user");
+
+  divMessageUser.innerHTML += `
+ <span class="user_name user_name_date">
+
+    <img
+      class="img_user"
+      src=${data.user.avatar}
+    />
+
+    <strong>${data.user.name}</strong>
+    
+    <span>${dayjs(data.message.created_at).format(
+      "DD/MM/YYYY HH:mm"
+    )}</span></span>
+
+    <div class="messages">
+      <span class="chat_message">${data.message.text}</span>
+    </div> 
+  `;
+};
 
 const addUser = (user) => {
   const usersList = document.getElementById("users_list");
@@ -62,13 +102,32 @@ const addUser = (user) => {
 };
 
 document.getElementById("users_list").addEventListener("click", (e) => {
+  document.getElementById("message_user").innerHTML = "";
+
   if (e.target && e.target.matches("li.user_name_list")) {
     const idUser = e.target.getAttribute("idUser");
     // console.log("idUser", idUser);
 
-    socket.emit("start_chat", { idUser }, (data) => {
-      // console.log(data);
-      idChatRoom = data.room.idChatRoom;
+    const notification = document.querySelector(
+      `#user_${idUser} .notification`
+    );
+
+    if (notification) {
+      notification.remove();
+    }
+
+    socket.emit("start_chat", { idUser }, (response) => {
+      // console.log(response.room.idChatRoom);
+      idChatRoom = response.room.idChatRoom;
+
+      response.messages.forEach((message) => {
+        const data = {
+          message,
+          user: message.to,
+        };
+
+        addMessage(data);
+      });
     });
   }
 });

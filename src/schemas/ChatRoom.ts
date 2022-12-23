@@ -1,4 +1,4 @@
-import { randomUUID as UUID } from "crypto";
+import { randomUUID as uuid } from "crypto";
 import mongoose, { Document, Schema } from "mongoose";
 import { User } from "./User";
 
@@ -16,7 +16,7 @@ const ChatRoomSchema = new Schema({
   ],
   idChatRoom: {
     type: String,
-    default: UUID(),
+    default: uuid,
   },
 });
 

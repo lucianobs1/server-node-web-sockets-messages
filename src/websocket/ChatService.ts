@@ -6,6 +6,8 @@ import { GetAllUsersService } from "../services/GetAllUsersService";
 import { GetUserBySocketIDService } from "../services/GetUserBySocketIDService";
 import { GetChatRoomByUsersService } from "../services/GetChatRoomByUsersService";
 import { CreateMessageService } from "../services/CreateMessageService";
+import { GetMessagesByChatRoomService } from "../services/GetMessagesByChatRoomService";
+import { GetChatRoomByIDService } from "../services/GetChatRoomByIDService";
 
 // io envio global de informações
 // socket controla o envio para alguns ou algum cliente
@@ -42,6 +44,10 @@ io.on("connect", (socket) => {
       GetUserBySocketIDService
     );
 
+    const getMessagesByChatRoomService = container.resolve(
+      GetMessagesByChatRoomService
+    );
+
     const userLogged = await getUserBySocketIdService.execute(socket.id);
 
     let room = await getChatRoomByUsersService.execute([
@@ -55,12 +61,17 @@ io.on("connect", (socket) => {
 
     socket.join(room.idChatRoom);
 
-    callback({ room });
+    // getMessagesOfRoom
+    const messages = await getMessagesByChatRoomService.execute(
+      room.idChatRoom
+    );
+
+    callback({ room, messages });
   });
 
   socket.on("message", async (data) => {
     const createMessageService = container.resolve(CreateMessageService);
-
+    const getChatRoomByIDService = container.resolve(GetChatRoomByIDService);
     const getUserBySocketIdService = container.resolve(
       GetUserBySocketIDService
     );
@@ -73,9 +84,23 @@ io.on("connect", (socket) => {
       roomId: data.idChatRoom,
     });
 
+    // Enviar notificação para outros usúarios
     io.to(data.idChatRoom).emit("message", {
       message,
       user,
+    });
+
+    // Enviar notificação para o usuário correto
+
+    const room = await getChatRoomByIDService.execute(data.idChatRoom);
+    const userFrom = room.idUsers.find(
+      (response) => String(response._id) != String(user._id)
+    );
+
+    io.to(userFrom.socket_id).emit("notification", {
+      newMessage: true,
+      roomId: data.idChatRoom,
+      from: user,
     });
   });
 });
