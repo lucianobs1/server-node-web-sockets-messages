@@ -1,7 +1,9 @@
-import { container } from "tsyringe";
 import { io } from "../http";
+import { container } from "tsyringe";
+import { CreateChatRoomService } from "../services/CreateChatRoomService";
 import { CreateUserService } from "../services/CreateUserService";
 import { GetAllUsersService } from "../services/GetAllUsersService";
+import { GetUserBySocketIDService } from "../services/GetUserBySocketIDService";
 
 // io envio global de informações
 // socket controla o envio para alguns ou algum cliente
@@ -27,5 +29,23 @@ io.on("connect", (socket) => {
     const users = await getAllUsersServices.execute();
 
     callback(users);
+  });
+
+  socket.on("start_chat", async (data, callback) => {
+    const createChatRoomService = container.resolve(CreateChatRoomService);
+    const getUserBySocketIdService = container.resolve(
+      GetUserBySocketIDService
+    );
+
+    const userLogged = await getUserBySocketIdService.execute(socket.id);
+
+    const room = await createChatRoomService.execute([
+      data.idUser,
+      userLogged._id,
+    ]);
+
+    console.log(room);
+
+    callback({ room });
   });
 });

@@ -14,7 +14,7 @@ const ChatRoomSchema = new Schema({
       ref: "Users",
     },
   ],
-  udChatRoom: {
+  idChatRoom: {
     type: String,
     default: UUID(),
   },
