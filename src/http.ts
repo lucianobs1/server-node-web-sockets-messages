@@ -9,7 +9,11 @@ import mongoose from "mongoose";
 const app = express();
 const server = createServer(app);
 
-mongoose.connect("mogodb://localhost/rocketsocket");
+mongoose.connect("mongodb://127.0.0.1:27017/rocketsocket");
+
+mongoose.set({
+  strictQuery: true,
+});
 
 const io = new Server(server);
 
