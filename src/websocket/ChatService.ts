@@ -5,6 +5,7 @@ import { CreateUserService } from "../services/CreateUserService";
 import { GetAllUsersService } from "../services/GetAllUsersService";
 import { GetUserBySocketIDService } from "../services/GetUserBySocketIDService";
 import { GetChatRoomByUsersService } from "../services/GetChatRoomByUsersService";
+import { CreateMessageService } from "../services/CreateMessageService";
 
 // io envio global de informações
 // socket controla o envio para alguns ou algum cliente
@@ -52,8 +53,29 @@ io.on("connect", (socket) => {
       room = await createChatRoomService.execute([data.idUser, userLogged._id]);
     }
 
-    console.log(room);
+    socket.join(room.idChatRoom);
 
     callback({ room });
+  });
+
+  socket.on("message", async (data) => {
+    const createMessageService = container.resolve(CreateMessageService);
+
+    const getUserBySocketIdService = container.resolve(
+      GetUserBySocketIDService
+    );
+
+    const user = await getUserBySocketIdService.execute(socket.id);
+
+    const message = await createMessageService.execute({
+      to: user._id,
+      text: data.message,
+      roomId: data.idChatRoom,
+    });
+
+    io.to(data.idChatRoom).emit("message", {
+      message,
+      user,
+    });
   });
 });
