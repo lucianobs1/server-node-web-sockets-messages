@@ -4,6 +4,7 @@ import { CreateChatRoomService } from "../services/CreateChatRoomService";
 import { CreateUserService } from "../services/CreateUserService";
 import { GetAllUsersService } from "../services/GetAllUsersService";
 import { GetUserBySocketIDService } from "../services/GetUserBySocketIDService";
+import { GetChatRoomByUsersService } from "../services/GetChatRoomByUsersService";
 
 // io envio global de informações
 // socket controla o envio para alguns ou algum cliente
@@ -32,6 +33,9 @@ io.on("connect", (socket) => {
   });
 
   socket.on("start_chat", async (data, callback) => {
+    const getChatRoomByUsersService = container.resolve(
+      GetChatRoomByUsersService
+    );
     const createChatRoomService = container.resolve(CreateChatRoomService);
     const getUserBySocketIdService = container.resolve(
       GetUserBySocketIDService
@@ -39,10 +43,14 @@ io.on("connect", (socket) => {
 
     const userLogged = await getUserBySocketIdService.execute(socket.id);
 
-    const room = await createChatRoomService.execute([
+    let room = await getChatRoomByUsersService.execute([
       data.idUser,
       userLogged._id,
     ]);
+
+    if (!room) {
+      room = await createChatRoomService.execute([data.idUser, userLogged._id]);
+    }
 
     console.log(room);
 
